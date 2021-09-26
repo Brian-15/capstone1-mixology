@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<form action="{{ path }}">
+    {{ form.hidden_field() }}
+    {% for field in form
+        if field.widget.input_type != "hidden" %}
+    <div class="form-label">
+        {{ field.label }}
+    </div>
+    <div class="form-control">
+        {{ field }}
+    </div>
+    {% endfor %}
+    <button class="btn btn-primary" type="submit">{{ btn_name }}</button>
+</form>
+
+{% endblock %}
