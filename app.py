@@ -1,3 +1,5 @@
+
+
 import os
 from flask import Flask, request, redirect
 from flask.templating import render_template
@@ -8,7 +10,7 @@ from forms import LoginForm, RegisterForm
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"]
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get()
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ECHO"] = True
 
@@ -19,6 +21,11 @@ db.create_all()
 app.config["SECRET_KEY"] = "s3cr1t059"
 
 debug = DebugToolbarExtension(app)
+
+# ------------------------------------------------------------- #
+# User Routes
+# ------------------------------------------------------------- #
+
 
 @app.route("/")
 def root():
@@ -66,3 +73,12 @@ def register():
                                form=form,
                                path="/register",
                                btn_name="Create")
+
+# ------------------------------------------------------------- #
+# Drink Resource Routes
+# ------------------------------------------------------------- #
+
+@app.route("/drinks", methods=["GET"])
+def list_drinks():
+
+    return render_template()
