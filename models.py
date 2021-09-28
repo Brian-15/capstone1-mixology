@@ -76,12 +76,12 @@ class User(db.Model):
         """Authenticate user.
         
         Returns user instance if password matches.
-        Returns False if no user of username is found."""
+        Returns False if no user is found or if password hashes do not match"""
 
-        user = cls.query.filter_by(username).one_or_none()
+        user = cls.query.filter_by(username=username).one_or_none()
 
-        if user:
-            pass # TODO
+        if user and bcrypt.check_password_hash(user.password, pwd):
+            return user
         else:
             return False
 
@@ -90,6 +90,15 @@ class User(db.Model):
         """Checks whether username is present in database."""
 
         return cls.query.filter_by(username=username).one_or_none() if True else False
+    
+    def serialize(self):
+        """Returns dict object of User model"""
+
+        return {
+            "id": self.id,
+            "username": self.username,
+            "language_pref": self.language_pref.code
+        }
     
 
 class Language(db.Model):
@@ -249,16 +258,20 @@ class DrinkIngredient(db.Model):
 
     __tablename__ = "drinks_ingredients"
 
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+        autoincrement=True
+    )
+
     drink_id = db.Column(
         db.Integer,
         db.ForeignKey("drinks.id", ondelete="cascade"),
-        primary_key=True
     )
 
     ingredient_id = db.Column(
         db.Integer,
-        db.ForeignKey("ingredients.id", ondelete="cascade"),
-        primary_key=True
+        db.ForeignKey("ingredients.id", ondelete="cascade")
     )
 
     quantity = db.Column(
@@ -275,24 +288,11 @@ class DrinkIngredient(db.Model):
         """Returns list of DrinkIngredient model instances
         which associate drink_id with ingredient_ids"""
 
-        models = []
-
-        for i in range(len(ingredient_ids)):
-
-            models.append(
-                DrinkIngredient(
-                    drink_id=drink_id,
-                    ingredient_id=ingredient_ids[i],
-                    quantity=quantities[i]
-                ))
-        
-        return models
-
-        # return [DrinkIngredient(
-        #     drink_id=drink_id,
-        #     ingredient_id=ingredient_ids[i],
-        #     quantity=quantities[i]
-        # ) for i in range(len(ingredient_ids))]
+        return [DrinkIngredient(
+            drink_id=drink_id,
+            ingredient_id=ingredient_ids[i],
+            quantity=quantities[i]
+        ) for i in range(len(ingredient_ids))]
     
 class Drink(db.Model):
     """Model class for drinks"""
@@ -349,10 +349,29 @@ class Drink(db.Model):
         secondary="drinks_ingredients"
     )
 
+    category = db.relationship("Category")
+
+    glass = db.relationship("Glass")
+
     def __repr__(self):
         """Returns string representation of instance"""
 
         return f"<Drink {self.name}>"
+
+    def serialize(self):
+        """Returns dict object containing drink data"""
+
+        return {
+            "id": self.id,
+            "name": self.name,
+            "image_url": self.image_url,
+            "image_attribution": self.image_attribution,
+            "video_url": self.video_url,
+            "alcoholic": self.alcoholic,
+            "optional_alc": self.optional_alc,
+            "category": self.category.name,
+            "glass": self.glass.name
+        }
     
     @classmethod
     def parse_drink_data(cls, data):
@@ -362,12 +381,7 @@ class Drink(db.Model):
         """
 
         category_id = Category.query.filter_by(name=data["strCategory"].lower()).one().id
-        glass_id = Glass.query.filter_by(name=data["strGlass"].lower()).one_or_none()
-
-        if not glass_id:
-            pdb.set_trace()
-        else:
-            glass_id = glass_id.id
+        glass_id = Glass.query.filter_by(name=data["strGlass"].lower()).one().id
 
         [instr_data, ingr_data, quant_data] = [[], [], []]
 
@@ -375,7 +389,7 @@ class Drink(db.Model):
             
             if "Measure" in key: quant_data.append(val)
 
-            if val is not None and val is not "":
+            if val is not None and val != "":
                 if "Ingredient" in key: ingr_data.append(val.lower())
                 if "Instructions" in key:
                     instr_data.append((key[15:], val))
@@ -400,7 +414,7 @@ class Drink(db.Model):
                 optional_alc=(True if data["strAlcoholic"].lower() == "optional alcohol" else False),
                 category_id=category_id,
                 name=data["strDrink"].lower(),
-                image_url=data["strImageSource"],
+                image_url=data["strImageSource"] if data["strImageSource"] else data["strDrinkThumb"],
                 image_attribution=data["strImageAttribution"],
                 glass_id=glass_id,
                 video_url=data["strVideo"]
