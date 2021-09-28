@@ -6,7 +6,8 @@ CREATE DATABASE mixology;
 CREATE TABLE languages
 (
     id   SERIAL PRIMARY KEY,
-    code TEXT UNIQUE
+    code TEXT UNIQUE,
+    name TEXT UNIQUE
 );
 
 INSERT INTO languages(code) VALUES('EN'), ('DE'), ('ES'), ('FR'), ('IT');
@@ -33,10 +34,11 @@ CREATE TABLE glasses
 
 CREATE TABLE instructions
 (
+    instruction_num SERIAL NOT NULL,
     drink_id INTEGER REFERENCES drinks,
     language_id INTEGER REFERENCES languages,
     instruction TEXT NOT NULL,
-    PRIMARY KEY(drink_id, language_id)
+    PRIMARY KEY(id, drink_id, language_id)
 );
 
 CREATE TABLE ingredients
@@ -57,12 +59,12 @@ CREATE TABLE drinks
 (
     id SERIAL PRIMARY KEY,
     name TEXT UNIQUE NOT NULL,
-    image_url TEXT UNIQUE,
+    image_url TEXT,
     image_attribution TEXT,
-    video_url TEXT UNIQUE,
+    video_url TEXT,
     alcoholic BOOLEAN NOT NULL,
     category_id INTEGER REFERENCES categories,
-    glass_type_id INTEGER REFERENCES glasses
+    glass_id INTEGER REFERENCES glasses
 );
 
 CREATE TABLE bookmarks
