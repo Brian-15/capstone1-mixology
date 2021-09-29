@@ -1,5 +1,5 @@
 from app import db
-from models import Ingredient, Language, Drink, Category, Glass, Instruction, DrinkIngredient
+from models import Ingredient, Language, Drink, Category, Glass
 import requests
 
 # add all standalone data

@@ -2,11 +2,12 @@ import requests
 import pdb
 
 from flask_sqlalchemy import SQLAlchemy
-from flask_bcrypt import bcrypt
+from flask_bcrypt import Bcrypt
 from sqlalchemy.orm import backref
 
 
 db = SQLAlchemy()
+bcrypt = Bcrypt()
 
 def submit_data(model):
     """add and commit model to database"""
@@ -59,14 +60,14 @@ class User(db.Model):
         return f"<User {self.id}>"
     
     @classmethod
-    def register(cls, username, pwd):
+    def register(cls, username, pwd, lang_pref_id):
         """Register new user account"""
 
         username = username
         hashed = bcrypt.generate_password_hash(pwd, rounds=14)
         hashed_utf8 = hashed.decode("utf8")
 
-        user = cls(username=username, password=hashed_utf8)
+        user = cls(username=username, password=hashed_utf8, language_pref_id=lang_pref_id)
         submit_data(user)
 
         return user

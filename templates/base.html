@@ -5,8 +5,45 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
 </head>
 <body>
-    <h1>{{ title }}</h1>
-    {% block content %}
-    {% endblock %}
+    <div class="container-fluid">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a href="" class="navbar-brand" href="/">MyMixology</a>
+            <ul class="navbar-nav mr-auto">
+                <li class="nav nav-item">
+                    <a href="/home" class="nav-link">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" id="" class="nav-link">Drinks</a>
+                </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                {% if g.user %}
+                <li class="nav-item">
+                    <a href="/users/{{ g.user.id }}">{{ g.user.username }}</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/logout" class="nav-link">Log Out</a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a href="/login" class="nav-link">Log In</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/register" class="nav-link">Register</a>
+                </li>
+                
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    <div class="container">
+        {% for category, msg in get_flashed_messages(with_categories=True) %}
+        <p class="alert alert-{{ category }}">{{ msg }}</p>
+        {% endfor %}
+        <h1 class="display-1 mt-5 mb-4">{{ title }}</h1>
+        {% block content %}
+        {% endblock %}
+    </div>
+    
 </body>
 </html>
