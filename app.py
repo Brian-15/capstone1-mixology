@@ -1,12 +1,13 @@
 
 
-import os
-from flask import Flask, request, redirect, jsonify, flash, session, g
+import os, pdb
+from flask import Flask, json, request, redirect, jsonify, flash, session, g
 from flask.templating import render_template
 from flask_debugtoolbar import DebugToolbarExtension
+from werkzeug.exceptions import HTTPException
 import flask_debugtoolbar
-from models import Drink, db, connect_db, User
-from forms import LoginForm, RegisterForm
+from models import Drink, DrinkIngredient, db, connect_db, User, Category, Ingredient
+from forms import LoginForm, RegisterForm, SearchForm
 
 USER_KEY = "curr_user"
 
@@ -22,9 +23,11 @@ app.config["SECRET_KEY"] = "s3cr1t059"
 
 debug = DebugToolbarExtension(app)
 
+ingredients = [(ingr.id, ingr.name.title()) for ingr in Ingredient.query.order_by(Ingredient.name).all()]
+categories = [(cat.id, cat.name.title()) for cat in Category.query.order_by(Category.name).all()]
 
 # ------------------------------------------------------------- #
-# User Routes
+# ---------------------- User Routes -------------------------- #
 # ------------------------------------------------------------- #
 
 @app.before_request
@@ -119,7 +122,7 @@ def list_users():
 
     users = User.query.all()
 
-    return {jsonify_model(user) for user in users}
+    return {jsonify(user.serialize()) for user in users}
 
 @app.route("/users/<int:id>", methods=["GET"])
 def get_user(id):
@@ -127,24 +130,69 @@ def get_user(id):
 
     user = User.query.get_or_404(id)
 
-    return jsonify_model(user)
+    return jsonify(user.serialize())
 
 # ------------------------------------------------------------- #
-# Drink Resource Routes
+# ------------------ Drink Resource Routes -------------------- #
 # ------------------------------------------------------------- #
 
-@app.route("/drinks", methods=["GET"])
+@app.route("/drinks", methods=["GET", "POST"])
 def list_drinks():
 
     drinks = Drink.query.all()
+    form = SearchForm()
+    form.ingredient.choices.extend(ingredients)
+    form.category.choices.extend(categories)
 
-    return {jsonify(drink.serialize()) for drink in drinks}
+    if request.method == "POST":
+
+        form_data = {field["name"]: field["value"] for field in request.json}
+
+        alcoholic = form_data.get("alcoholic", False)
+        name = form_data["name"] if form_data["name"] != '' else False
+        category_id = form_data["category"] if int(form_data["category"]) is not 0 else False
+        ingredient_id = form_data["ingredient"] if int(form_data["ingredient"]) is not 0 else False
+
+        drinks = Drink.query
+        if alcoholic:
+            drinks = drinks.filter(Drink.alcoholic == True)
+        else:
+            drinks = drinks.filter(Drink.alcoholic == False)
+        
+        if name:
+            print("***contains name***")
+            print(name)
+            drinks = drinks.filter(Drink.name.ilike(f"%{name}%"))
+        
+        if category_id:
+            print("***contains category***")
+            print(category_id)
+            drinks = drinks.filter(Drink.category_id == category_id)
+        
+        if ingredient_id:
+            print("***contains ingredient***")
+            print(ingredient_id)
+            drink_ids = [pair.drink_id for pair in DrinkIngredient.query.filter_by(ingredient_id=ingredient_id).all()]
+            drinks = drinks.filter(Drink.id.in_(drink_ids))
+
+        drinks = drinks.all()
+
+        return jsonify([drink.serialize() for drink in drinks])
+        
+
+    return render_template("drinks.html", title="Drinks", drinks=drinks, form=form)
 
 @app.route("/drinks/<int:id>", methods=["GET"])
 def get_drink(id):
 
     drink = Drink.query.get_or_404(id)
 
-    print(jsonify(drink.serialize()))
+    return render_template("drink.html", title=drink.name.title(), drink=drink)
 
-    return {jsonify(drink.serialize())}
+@app.errorhandler(HTTPException)
+def handle_exception(e):
+
+    if isinstance(e, HTTPException):
+        return render_template("error.html", error=e, title="Something went wrong.")
+    else:
+        return render_template("error.html", error=e, title="Something went wrong."), 500
