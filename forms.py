@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField
-from wtforms.fields.core import SelectField
-from wtforms.validators import InputRequired, EqualTo
+from wtforms import StringField, PasswordField, SelectField, RadioField
+from wtforms.fields.core import BooleanField
+from wtforms.validators import InputRequired, EqualTo, Optional
 
 class LoginForm(FlaskForm):
 
@@ -34,4 +34,29 @@ class RegisterForm(LoginForm):
             (7, "Mandarin, Traditional")
         ],
         validators = [InputRequired()]
+    )
+
+class SearchForm(FlaskForm):
+
+    name = StringField(
+        "Search By Name",
+        validators=[Optional()]
+    )
+
+    category = SelectField(
+        "Filter By Category",
+        choices=[(0, "-")],
+        validators=[InputRequired()]
+    )
+
+    ingredient = SelectField(
+        "Filter By Ingredient",
+        choices=[(0, "-")],
+        validators=[InputRequired()]
+    )
+
+    alcoholic = BooleanField(
+        "Contains Alcohol?",
+        default=True,
+        validators=[Optional()]
     )
