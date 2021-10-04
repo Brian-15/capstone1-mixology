@@ -46,11 +46,13 @@ for glass in glasses:
 
 for id in drink_ids:
     drink_data = requests.get(f"https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i={id}").json()
-    [drink_model, instruction_models, drink_ingr_models] = Drink.parse_drink_data(drink_data["drinks"][0])
+
+    if drink_data["drinks"][0]["strCreativeCommonsConfirmed"] == "Yes":
+        [drink_model, instruction_models, drink_ingr_models] = Drink.parse_drink_data(drink_data["drinks"][0])
     
-    drinks.append(drink_model)
-    drinks_instructions.extend(instruction_models)
-    drinks_ingredients.extend(drink_ingr_models)
+        drinks.append(drink_model)
+        drinks_instructions.extend(instruction_models)
+        drinks_ingredients.extend(drink_ingr_models)
 
 db.session.add_all(drinks)
 db.session.commit()
