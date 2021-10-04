@@ -1,6 +1,3 @@
-import requests
-import pdb
-
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from sqlalchemy.orm import backref
@@ -279,10 +276,14 @@ class DrinkIngredient(db.Model):
         db.Text
     )
 
+    ingredient = db.relationship("Ingredient")
+
     def __repr__(self):
         """Return instance string representation"""
 
         return f"<DrinkIngredient drink:{self.drink_id} ingredient:{self.ingredient_id}>"
+    
+
     
     @classmethod
     def generate_models(cls, drink_id, ingredient_ids, quantities):
@@ -346,8 +347,8 @@ class Drink(db.Model):
     )
 
     ingredients = db.relationship(
-        "Ingredient",
-        secondary="drinks_ingredients"
+        "DrinkIngredient",
+        primaryjoin=(DrinkIngredient.drink_id == id)
     )
 
     category = db.relationship("Category")
@@ -364,15 +365,18 @@ class Drink(db.Model):
 
         return {
             "id": self.id,
-            "name": self.name,
+            "name": self.name.title(),
             "image_url": self.image_url,
             "image_attribution": self.image_attribution,
-            "video_url": self.video_url,
             "alcoholic": self.alcoholic,
             "optional_alc": self.optional_alc,
-            "category": self.category.name,
-            "glass": self.glass.name
+            "category": self.category.name.title(),
+            "category_id": self.category_id
         }
+    
+    def get_video_url_id(self):
+
+        return self.video_url.split("/")[-1]
     
     @classmethod
     def parse_drink_data(cls, data):
@@ -415,7 +419,7 @@ class Drink(db.Model):
                 optional_alc=(True if data["strAlcoholic"].lower() == "optional alcohol" else False),
                 category_id=category_id,
                 name=data["strDrink"].lower(),
-                image_url=data["strImageSource"] if data["strImageSource"] else data["strDrinkThumb"],
+                image_url=data["strDrinkThumb"] if data["strDrinkThumb"] else data["strImageSource"],
                 image_attribution=data["strImageAttribution"],
                 glass_id=glass_id,
                 video_url=data["strVideo"]
