@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<form action="/drinks">
+    {{ form.hidden_tag() }}
+    {% for field in form
+        if field.widget.input_type != "hidden" %}
+    <div class="form-label">{{ field.label }}</div>
+    <div class="form-control">{{ field }}</div>
+    {% endfor %}
+    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+</form>
+<div id="drinks-list" class="list-group">
+    {% for drink in drinks %}
+    <div id="{{ drink.id }}" class="list-group-item list-group-item-action">
+        <img class="mx-auto d-inline rounded img-thumbnail" src="{{ drink.image_url }}" alt="" width="200px">
+        <a class="display-5 d-inline text-decoration-none" href="/drinks/{{ drink.id }}">{{ drink.name.title() }}</a>
+        <span id="{{ drink.category_id }}" class="badge-pill badge-info">{{ drink.category.name.title() }}</span>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container text-center">
+    <h2 class="text-center">Category: {{ drink.category.name.title() }}</h2>
+    <img class="rounded float-left" src="{{ drink.image_url }}" alt="{{ drink.name.title() }}" width="200px">
+    <p>Attribution: {{ drink.image_attribution }}</p>
+    <table class="table d-inline">
+        <thead>
+            <tr>
+                <th scope="col">Quantity</th>
+                <th scope="col">Ingredient</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for recipe_item in drink.ingredients %}
+            <tr>
+                <td>
+                    {% if recipe_item.quantity %}
+                    {{ recipe_item.quantity }}
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td>{{ recipe_item.ingredient.name.title() }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2 class="text-center">Instructions</h2>
+    <p>{{ drink.instructions[0].text }}</p>
+
+    {% if drink.video_url %}
+    <iframe src="https://www.youtube.com/embed/{{ drink.get_video_url_id() }}" frameborder="0"></iframe>
+    {% endif %}
+</div>
+
+
+{% endblock %}
