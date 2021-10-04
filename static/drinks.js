@@ -1,8 +1,23 @@
+/// Script for drinks.html template
+
 $drinksList = $('#drinks-list');
 $searchForm = $('form');
-$searchForm.on('submit', handleForm)
+$searchForm.on('submit', handleForm);
+$nameField = $('#name');
+$categoryField = $('#category');
+$ingredientField = $('#ingredient')
+$clearBtn = $('#clear-btn');
 
+/// Clears SearchForm fields upon button click
+$clearBtn.click(evt => {
+    $nameField.val('');
+    $categoryField.val('0');
+    $ingredientField.val('0');
+});
+
+/// Event Handler function for handling AJAX requests via Axios to the server, fetches drink data, and replaces drink list on DOM
 async function handleForm(evt) {
+
     evt.preventDefault();
 
     formData = $searchForm.serializeArray();
@@ -11,7 +26,7 @@ async function handleForm(evt) {
 
     drinkData = resp.data;
 
-    // console.log(data);
+    console.log("form submitted");
 
     $drinksList.html('');
 

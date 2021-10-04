@@ -1,3 +1,5 @@
+"""Database SQLAlchemy Models"""
+
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from sqlalchemy.orm import backref
@@ -7,7 +9,7 @@ db = SQLAlchemy()
 bcrypt = Bcrypt()
 
 def submit_data(model):
-    """add and commit model to database"""
+    """Add and commit model to database"""
 
     db.session.add(model)
     db.session.commit()
@@ -97,6 +99,15 @@ class User(db.Model):
             "username": self.username,
             "language_pref": self.language_pref.code
         }
+    
+    def has_bookmark(self, drink_id):
+        """Finds relevant bookmark for user object by drink id.
+        Returns bookmark object if found, else None."""
+
+        return Bookmark.query.filter_by(drink_id=drink_id, user_id=self.id).one_or_none()            
+            
+
+
     
 
 class Language(db.Model):
@@ -248,8 +259,7 @@ class Ingredient(db.Model):
         """Create new ingredient model and commit to database"""
 
         ingr = cls(name=name)
-        db.session.add(ingr)
-        db.session.commit()
+        submit_data(ingr)
 
 class DrinkIngredient(db.Model):
     """Model class for drink recipe to ingredient associations"""
@@ -375,6 +385,8 @@ class Drink(db.Model):
         }
     
     def get_video_url_id(self):
+        """Returns last section of video URL.
+        This is formatted for YouTube URL links, where the video id is located at the end of the URL."""
 
         return self.video_url.split("/")[-1]
     

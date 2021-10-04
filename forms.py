@@ -4,6 +4,7 @@ from wtforms.fields.core import BooleanField
 from wtforms.validators import InputRequired, EqualTo, Optional
 
 class LoginForm(FlaskForm):
+    """User login form."""
 
     username = StringField("Username",
                            validators = [InputRequired()])
@@ -13,6 +14,7 @@ class LoginForm(FlaskForm):
 
     
 class RegisterForm(LoginForm):
+    """User registration form. Extends fields from LoginForm."""
 
     confirm_password = PasswordField(
         "Confirm Password",
@@ -37,6 +39,7 @@ class RegisterForm(LoginForm):
     )
 
 class SearchForm(FlaskForm):
+    """Search form that queries database for drinks with any or several of the below filters"""
 
     name = StringField(
         "Search By Name",

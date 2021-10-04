@@ -1,9 +1,23 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container text-center">
-    <h2 class="text-center">Category: {{ drink.category.name.title() }}</h2>
+
+<div class="container text-center mb-5">
+    <div class="d-flex flex-column justify-content-center">
+        <span class="badge rounded-pill bg-primary mb-3 mx-auto">{{ drink.category.name.title() }}</span>
+        {% if g.user %}
+            {% if g.user.has_bookmark(drink.id) %}
+            <i class="bi bi-bookmark-fill fs-2"></i>
+            {% else %}
+            <i class="bi bi-bookmark fs-2"></i>
+            {% endif %}
+        {% endif %}
+    </div>
+
+
     <img class="rounded float-left" src="{{ drink.image_url }}" alt="{{ drink.name.title() }}" width="200px">
-    <p>Attribution: {{ drink.image_attribution }}</p>
+    {% if drink.image_attribution %}
+    <p>{{ drink.image_attribution }}</p>
+    {% endif %}
     <table class="table d-inline">
         <thead>
             <tr>
@@ -26,14 +40,25 @@
             {% endfor %}
         </tbody>
     </table>
-
-    <h2 class="text-center">Instructions</h2>
-    <p>{{ drink.instructions[0].text }}</p>
-
-    {% if drink.video_url %}
-    <iframe src="https://www.youtube.com/embed/{{ drink.get_video_url_id() }}" frameborder="0"></iframe>
-    {% endif %}
 </div>
 
+<h2 class="text-center">Instructions</h2>
+<div class="mb-5">
+    {% for instruction in drink.instructions %}
+    <h3>{{ instruction.language.name }}</h3>
+    <p>{{ instruction.text }}</p>
+    {% endfor %}    
+</div>
 
+{% if drink.video_url %}
+<iframe src="https://www.youtube.com/embed/{{ drink.get_video_url_id() }}" frameborder="0"></iframe>
+{% endif %}
+
+
+{% endblock %}
+
+{% block dependencies %}
+<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="/static/drink.js"></script>
 {% endblock %}

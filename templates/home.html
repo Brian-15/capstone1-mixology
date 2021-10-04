@@ -1,4 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
+<p class="h2 text-center">Welcome to MyMixology!</p>
+<p class="h5 text-center">Explore various drink recipes, and bookmark them with your own account.</p>
+{% if g.user %}
+<p>Welcome!</p>
+{% else %}
+<div class="flex-inline mt-5 justify-content-evenly d-flex">
+    <a href="/login" class="btn btn-success d-block">Log In</a>
+    <a href="/register" class="btn btn-outline-success d-block">Register</a>
+</div>
+{% endif %}
 
 {% endblock %}

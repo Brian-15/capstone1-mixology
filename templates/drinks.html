@@ -8,16 +8,23 @@
     <div class="form-label">{{ field.label }}</div>
     <div class="form-control">{{ field }}</div>
     {% endfor %}
-    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+    <button class="btn btn-outline-success my-2 my-sm-0 d-inline" type="submit">Search</button>
+    <span id="clear-btn" class="btn btn-outline-primary">Clear Fields</span>
 </form>
 <div id="drinks-list" class="list-group">
     {% for drink in drinks %}
     <div id="{{ drink.id }}" class="list-group-item list-group-item-action">
         <img class="mx-auto d-inline rounded img-thumbnail" src="{{ drink.image_url }}" alt="" width="200px">
         <a class="display-5 d-inline text-decoration-none" href="/drinks/{{ drink.id }}">{{ drink.name.title() }}</a>
-        <span id="{{ drink.category_id }}" class="badge-pill badge-info">{{ drink.category.name.title() }}</span>
+        <span id="{{ drink.category_id }}" class="badge rounded-pill bg-primary">{{ drink.category.name.title() }}</span>
     </div>
     {% endfor %}
 </div>
 
+{% endblock %}
+
+{% block dependencies %}
+<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="/static/drinks.js"></script>
 {% endblock %}

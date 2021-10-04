@@ -1,12 +1,9 @@
-
-
-import os, pdb
-from flask import Flask, json, request, redirect, jsonify, flash, session, g
+import os
+from flask import Flask, request, redirect, jsonify, flash, session, g
 from flask.templating import render_template
 from flask_debugtoolbar import DebugToolbarExtension
 from werkzeug.exceptions import HTTPException
-import flask_debugtoolbar
-from models import Drink, DrinkIngredient, db, connect_db, User, Category, Ingredient
+from models import Bookmark, Drink, DrinkIngredient, db, connect_db, User, Category, Ingredient
 from forms import LoginForm, RegisterForm, SearchForm
 
 USER_KEY = "curr_user"
@@ -42,19 +39,22 @@ def add_user_to_g():
 
 @app.route("/")
 def root():
+    """Root route. Redirect to /home"""
 
     return redirect("/home")
 
 @app.route("/home")
 def home():
+    """Render home page"""
 
     return render_template("home.html",
                            title="Home")
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    """User login route"""
 
-    if g.user:
+    if USER_KEY in session:
         flash("You must be logged out to view this.", "danger")
         return redirect("/home")
 
@@ -83,6 +83,7 @@ def login():
 
 @app.route("/logout", methods=["GET"])
 def logout():
+    """User logout route"""
 
     if USER_KEY in session:
         del session[USER_KEY]
@@ -94,6 +95,11 @@ def logout():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    """User registration route"""
+
+    if USER_KEY in session:
+        flash("You must log out to register.", "danger")
+        return redirect("/home")
 
     form = RegisterForm()
 
@@ -116,21 +122,20 @@ def register():
             btn_name="Create"
         )
 
-@app.route("/users", methods=["GET"])
-def list_users():
-    """Return JSON data of all users"""
-
-    users = User.query.all()
-
-    return {jsonify(user.serialize()) for user in users}
-
 @app.route("/users/<int:id>", methods=["GET"])
 def get_user(id):
-    """Return JSON data of user"""
+    """Renders logged in user's profile"""
 
-    user = User.query.get_or_404(id)
+    if USER_KEY not in session:
+        flash("You must be logged in to view this", "danger")
+        return redirect("/login")
+    
+    if g.user.id is not id:
+        flash("You do not have access to this user's profile.", "danger")
+        return redirect("/home")
 
-    return jsonify(user.serialize())
+
+    return render_template("user.html", user=g.user, title="Profile")
 
 # ------------------------------------------------------------- #
 # ------------------ Drink Resource Routes -------------------- #
@@ -138,8 +143,12 @@ def get_user(id):
 
 @app.route("/drinks", methods=["GET", "POST"])
 def list_drinks():
+    """Resource route for listing out drinks
+    
+    GET: Render drinks.html template, and display all drinks.
+    POST: Return JSON data with list of drinks that underwent filters from SearchForm.
+    """
 
-    drinks = Drink.query.all()
     form = SearchForm()
     form.ingredient.choices.extend(ingredients)
     form.category.choices.extend(categories)
@@ -154,24 +163,19 @@ def list_drinks():
         ingredient_id = form_data["ingredient"] if int(form_data["ingredient"]) is not 0 else False
 
         drinks = Drink.query
+
         if alcoholic:
             drinks = drinks.filter(Drink.alcoholic == True)
         else:
             drinks = drinks.filter(Drink.alcoholic == False)
         
         if name:
-            print("***contains name***")
-            print(name)
             drinks = drinks.filter(Drink.name.ilike(f"%{name}%"))
         
         if category_id:
-            print("***contains category***")
-            print(category_id)
             drinks = drinks.filter(Drink.category_id == category_id)
         
         if ingredient_id:
-            print("***contains ingredient***")
-            print(ingredient_id)
             drink_ids = [pair.drink_id for pair in DrinkIngredient.query.filter_by(ingredient_id=ingredient_id).all()]
             drinks = drinks.filter(Drink.id.in_(drink_ids))
 
@@ -179,18 +183,56 @@ def list_drinks():
 
         return jsonify([drink.serialize() for drink in drinks])
         
+    drinks = Drink.query.all()
 
     return render_template("drinks.html", title="Drinks", drinks=drinks, form=form)
 
 @app.route("/drinks/<int:id>", methods=["GET"])
 def get_drink(id):
+    """Get drink of id, and display page with resource instance information."""
 
     drink = Drink.query.get_or_404(id)
 
     return render_template("drink.html", title=drink.name.title(), drink=drink)
 
+@app.route("/drinks/<int:id>/bookmark", methods = ["POST"])
+def bookmark_drink(id):
+    """Bookmarks drink of id for logged in user."""
+
+    if USER_KEY not in session:
+        return jsonify({"STATUS": "NO_USER_FOUND"})
+    
+    bookmark = Bookmark(drink_id=id, user_id=g.user.id)
+    db.session.add(bookmark)
+    db.session.commit()
+    return jsonify({
+        "STATUS": "OK",
+        "CLASS": "bi bi-bookmark-fill fs-2"
+    })
+
+
+@app.route("/drinks/<int:id>/bookmark", methods = ["DELETE"])
+def remove_bookmark(id):
+    """Removes bookmark of drink for logged in user."""
+
+    if USER_KEY not in session:
+        return jsonify({"STATUS": "NO_USER_FOUND"})
+
+    Bookmark.query.filter_by(drink_id=id, user_id=g.user.id).delete()
+    db.session.commit()
+    return jsonify({
+        "STATUS": "OK",
+        "CLASS": "bi bi-bookmark fs-2"
+    })
+
+
+# ------------------------------------------------------------- #
+# ----------------------- Error Route ------------------------- #
+# ------------------------------------------------------------- #
+
 @app.errorhandler(HTTPException)
 def handle_exception(e):
+    """Renders error page if URL not found, or if there is a server error."""
 
     if isinstance(e, HTTPException):
         return render_template("error.html", error=e, title="Something went wrong.")
