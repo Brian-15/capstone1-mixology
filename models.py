@@ -105,10 +105,6 @@ class User(db.Model):
         Returns bookmark object if found, else None."""
 
         return Bookmark.query.filter_by(drink_id=drink_id, user_id=self.id).one_or_none()            
-            
-
-
-    
 
 class Language(db.Model):
     """Model class for languages"""

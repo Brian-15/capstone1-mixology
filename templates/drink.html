@@ -3,7 +3,10 @@
 
 <div class="container text-center mb-5">
     <div class="d-flex flex-column justify-content-center">
-        <span class="badge rounded-pill bg-primary mb-3 mx-auto">{{ drink.category.name.title() }}</span>
+        <div class="d-flex flex-row justify-content-center">
+            <h1><span class="badge rounded-pill btn-lg bg-primary mb-3 mx-auto">{{ drink.category.name.title() }}</span></h1>
+            <h1><span class="badge rounded-pill bg-secondary mb-3 mx-auto">{{ drink.glass.name.title() }}</span></h1>    
+        </div>
         {% if g.user %}
             {% if g.user.has_bookmark(drink.id) %}
             <i class="bi bi-bookmark-fill fs-2"></i>
@@ -16,7 +19,7 @@
 
     <img class="rounded float-left" src="{{ drink.image_url }}" alt="{{ drink.name.title() }}" width="200px">
     {% if drink.image_attribution %}
-    <p>{{ drink.image_attribution }}</p>
+    <p>From: {{ drink.image_attribution }}</p>
     {% endif %}
     <table class="table d-inline">
         <thead>
