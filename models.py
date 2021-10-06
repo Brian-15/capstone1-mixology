@@ -187,7 +187,7 @@ class Instruction(db.Model):
 
     drink_id = db.Column(
         db.Integer,
-        db.ForeignKey("drinks.id"),
+        db.ForeignKey("drinks.id", ondelete="CASCADE"),
         primary_key=True
     )
 
@@ -384,7 +384,7 @@ class Drink(db.Model):
         """Returns last section of video URL.
         This is formatted for YouTube URL links, where the video id is located at the end of the URL."""
 
-        return self.video_url.split("/")[-1]
+        return self.video_url.split("=")[-1]
     
     @classmethod
     def parse_drink_data(cls, data):
