@@ -20,8 +20,6 @@ app.config["SECRET_KEY"] = "s3cr1t059"
 
 debug = DebugToolbarExtension(app)
 
-ingredients = [(ingr.id, ingr.name.title()) for ingr in Ingredient.query.order_by(Ingredient.name).all()]
-categories = [(cat.id, cat.name.title()) for cat in Category.query.order_by(Category.name).all()]
 
 # ------------------------------------------------------------- #
 # ---------------------- User Routes -------------------------- #
@@ -130,7 +128,7 @@ def get_user(id):
         flash("You must be logged in to view this", "danger")
         return redirect("/login")
     
-    if g.user.id is not id:
+    if session[USER_KEY] is not id:
         flash("You do not have access to this user's profile.", "danger")
         return redirect("/home")
 
@@ -150,6 +148,10 @@ def list_drinks():
     """
 
     form = SearchForm()
+
+    ingredients = [(ingr.id, ingr.name.title()) for ingr in Ingredient.query.order_by(Ingredient.name).all()]
+    categories = [(cat.id, cat.name.title()) for cat in Category.query.order_by(Category.name).all()]
+
     form.ingredient.choices.extend(ingredients)
     form.category.choices.extend(categories)
 
@@ -191,9 +193,14 @@ def list_drinks():
 def get_drink(id):
     """Get drink of id, and display page with resource instance information."""
 
+    user = USER_KEY in session
+
     drink = Drink.query.get_or_404(id)
 
-    return render_template("drink.html", title=drink.name.title(), drink=drink)
+    return render_template("drink.html",
+                           title=drink.name.title(),
+                           drink=drink,
+                           user=user)
 
 @app.route("/drinks/<int:id>/bookmark", methods = ["POST"])
 def bookmark_drink(id):
