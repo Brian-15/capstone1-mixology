@@ -128,7 +128,7 @@ def get_user(id):
         flash("You must be logged in to view this", "danger")
         return redirect("/login")
     
-    if session[USER_KEY] is not id:
+    if session[USER_KEY] != id:
         flash("You do not have access to this user's profile.", "danger")
         return redirect("/home")
 
@@ -161,8 +161,8 @@ def list_drinks():
 
         alcoholic = form_data.get("alcoholic", False)
         name = form_data["name"] if form_data["name"] != '' else False
-        category_id = form_data["category"] if int(form_data["category"]) is not 0 else False
-        ingredient_id = form_data["ingredient"] if int(form_data["ingredient"]) is not 0 else False
+        category_id = form_data["category"] if int(form_data["category"]) != 0 else False
+        ingredient_id = form_data["ingredient"] if int(form_data["ingredient"]) != 0 else False
 
         drinks = Drink.query
 
