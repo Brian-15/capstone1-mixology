@@ -13,8 +13,14 @@ class LoginForm(FlaskForm):
                              validators = [InputRequired()])
 
     
-class RegisterForm(LoginForm):
-    """User registration form. Extends fields from LoginForm."""
+class RegisterForm(FlaskForm):
+    """User registration form."""
+
+    username = StringField("Username",
+                           validators = [InputRequired()])
+
+    password = PasswordField("Password",
+                             validators = [InputRequired()])
 
     confirm_password = PasswordField(
         "Confirm Password",
