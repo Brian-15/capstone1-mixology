@@ -46,10 +46,12 @@
 </div>
 
 <h2 class="text-center">Instructions</h2>
-<div class="mb-5">
+<div class="mb-5 text-center">
     {% for instruction in drink.instructions %}
     <h3>{{ instruction.language.name }}</h3>
-    <p>{{ instruction.text }}</p>
+        {% for step in instruction.text.split("\r\n") %}
+        <p>{{ step }}</p>
+        {% endfor %}
     {% endfor %}    
 </div>
 
