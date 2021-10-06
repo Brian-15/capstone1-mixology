@@ -1,4 +1,4 @@
-from app import db
+from app import db, app
 from models import Ingredient, Language, Drink, Category, Glass
 import requests
 
