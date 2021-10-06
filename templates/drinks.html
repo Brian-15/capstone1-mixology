@@ -16,7 +16,7 @@
     <div id="{{ drink.id }}" class="list-group-item list-group-item-action">
         <img class="mx-auto d-inline rounded img-thumbnail" src="{{ drink.image_url }}" alt="" width="200px">
         <a class="display-5 d-inline text-decoration-none" href="/drinks/{{ drink.id }}">{{ drink.name.title() }}</a>
-        <h2 class="d-inline"><span id="{{ drink.category_id }}" class="badge rounded-pill bg-primary">{{ drink.category.name.title() }}</span></h2>
+        <h2 class="d-inline text-right"><span id="{{ drink.category_id }}" class="tag-pill rounded-pill bg-primary text-light">{{ drink.category.name.title() }}</span></h2>
     </div>
     {% endfor %}
 </div>
