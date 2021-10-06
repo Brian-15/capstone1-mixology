@@ -1,9 +1,9 @@
-import requests, spacy
+import requests, spacy, en_core_web_sm
 from profanity_filter import ProfanityFilter
 from app import db, app
 from models import Ingredient, Language, Drink, Category, Glass
 
-nlp = spacy.load("en")
+nlp = en_core_web_sm.load()
 pf = ProfanityFilter()
 nlp.add_pipe(pf.spacy_component, last=True)
 
