@@ -42,8 +42,7 @@
         <p class="alert alert-{{ category }}">{{ msg }}</p>
         {% endfor %}
         <h1 class="display-1 mt-5 mb-4 text-center">{{ title }}</h1>
-        {% block content %}
-        {% endblock %}
+        {% block content %}{% endblock %}
     </div>
     {% block dependencies %}{% endblock %}
 
