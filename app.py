@@ -137,6 +137,18 @@ def get_user(id):
 
     return render_template("user.html", user=g.user, title="Profile")
 
+@app.route("/users/<int:id>", methods=["DELETE"])
+def delete_user(id):
+    """Delete user account"""
+
+    User.query.filter_by(id=id).delete()
+    db.session.commit()
+
+    del session[USER_KEY]
+    flash("Account successfully delete.", "success")
+
+    return redirect("/")
+
 # ------------------------------------------------------------- #
 # ------------------ Drink Resource Routes -------------------- #
 # ------------------------------------------------------------- #

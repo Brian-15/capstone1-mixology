@@ -3,7 +3,7 @@ from better_profanity import profanity
 from app import db, app
 from models import Ingredient, Language, Drink, Category, Glass
 
-profanity.load_censor_words(["sex", "bitch", "asshole", "smut"])
+profanity.load_censor_words(["sex", "bitch", "asshole", "smut", "ass"])
 db.drop_all()
 db.create_all()
 
