@@ -6,6 +6,7 @@ os.environ["DATABASE_URL"] = "postgresql:///mixology-test"
 
 from app import app, USER_KEY
 
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql:///mixology-test"
 app.config["SQLALCHEMY_ECHO"] = False
 app.config["WTF_CSRF_ENABLED"] = False
 
@@ -184,3 +185,49 @@ class UserViewsTestCase(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(Bookmark.query.all()), 1)
         self.assertIn(Drink.query.one().name.title(), html)
+
+    def test_user_delete_logged_in(self):
+        """Test user delete route when logged in as user that wants to be deleted."""
+
+        with app.test_client() as c:
+            with c.session_transaction() as sess:
+                sess[USER_KEY] = self.testuser.id
+            
+            resp = c.delete(f"/users/{self.testuser.id}", follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(len(User.query.filter_by(username=self.testuser.username).all()), 0)
+            self.assertNotIn("My Profile", html)
+
+    def test_user_delete_logged_out(self):
+        """Test user delete route when logged out."""
+
+        with app.test_client() as c:
+            
+            resp = c.delete(f"/users/{self.testuser.id}", follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(len(User.query.filter_by(username=self.testuser.username).all()), 1)
+            self.assertNotIn("My Profile", html)
+            self.assertIn("Log In", html)
+            self.assertIn("You must be logged in to do this.", html)
+
+    def test_user_delete_logged_in_as_other_user(self):
+        """Test user delete route when logged in as another user"""
+
+        with app.test_client() as c:
+
+            User.register("test2", "password", 1)
+
+            with c.session_transaction() as sess:
+                sess[USER_KEY] = self.testuser.id + 1
+
+            resp = c.delete(f"/users/{self.testuser.id}", follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(len(User.query.filter_by(username=self.testuser.username).all()), 1)
+            self.assertIn("My Profile", html)
+            self.assertIn("You do not have permission to do this.", html)

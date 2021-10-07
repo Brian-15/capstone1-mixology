@@ -90,7 +90,7 @@ def logout():
         flash("You are now logged out.", "success")
         return redirect("/home")
     else:
-        flash("You must log in to do this.", "danger")
+        flash("You must be logged in to do this.", "danger")
         return redirect("/login")
 
 @app.route("/register", methods=["GET", "POST"])
@@ -141,13 +141,21 @@ def get_user(id):
 def delete_user(id):
     """Delete user account"""
 
+    if USER_KEY not in session:
+        flash("You must be logged in to do this.", "danger")
+        return redirect("/login")
+    
+    if session[USER_KEY] != id:
+        flash("You do not have permission to do this.", "danger")
+        return redirect("/")
+
     User.query.filter_by(id=id).delete()
     db.session.commit()
 
     del session[USER_KEY]
-    flash("Account successfully delete.", "success")
+    flash("Account successfully deleted.", "success")
 
-    return redirect("/")
+    return redirect("/logout")
 
 # ------------------------------------------------------------- #
 # ------------------ Drink Resource Routes -------------------- #
