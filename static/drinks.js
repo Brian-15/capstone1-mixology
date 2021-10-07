@@ -32,27 +32,30 @@ async function handleForm(evt) {
 
     for (let drink of drinkData) {
         $drinksList.append(
-            $('<div>').attr({
-                'id': drink['id'],
-                'class': 'list-group-item list-group-item-action'
-            }).append([
-                $('<img>').attr({
-                    'src': drink.image_url,
-                    'width': '200px',
-                    'class': 'mx-auto d-inline rounded img-thumbnail',
-                    'alt': ''
-                }),
-                $('<a>').attr({
-                    'href': `/drinks/${drink['id']}`,
-                    'class': 'display-5 d-inline text-decoration-none'
-                }).text(drink['name']),
-                $('<h1>').attr('class', 'd-inline text-right')
+            $('<tr>').attr('id', drink['id']).append([
+                $('<td>').append(
+                    $('<img>').attr({
+                        'src': drink.image_url,
+                        'width': '200px',
+                        'class': 'mx-auto d-inline rounded img-thumbnail',
+                        'alt': ''
+                    })
+                ),
+                $('<td>').attr('class', 'align-middle').append(
+                    $('<a>').attr({
+                        'href': `/drinks/${drink['id']}`,
+                        'class': 'display-5 d-inline text-decoration-none text-wrap'
+                    }).text(drink['name'])
+                ),
+                $('<td>').attr('class', 'align-middle').append(
+                    $('<h1>').attr('class', 'd-inline text-right')
                     .append(
                         $('<span>').attr({
                             'id': drink["category_id"],
                             'class': 'tag-pill rounded-pill bg-primary text-light px-3',
                         }).text(drink["category"])
                     )
+                )
             ])
         );
     }
