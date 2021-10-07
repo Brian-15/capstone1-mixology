@@ -1,11 +1,8 @@
-import requests, spacy, en_core_web_sm
-from profanity_filter import ProfanityFilter
+import requests
+from profanity import profanity
 from app import db, app
 from models import Ingredient, Language, Drink, Category, Glass
 
-nlp = en_core_web_sm.load()
-pf = ProfanityFilter()
-nlp.add_pipe(pf.spacy_component, last=True)
 
 db.drop_all()
 db.create_all()
@@ -50,7 +47,7 @@ for glass in glasses:
 for id in drink_ids:
     drink_data = requests.get(f"https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i={id}").json()
 
-    if pf.is_clean(drink_data["drinks"][0]["strDrink"]):
+    if profanity.contains_profanity(drink_data["drinks"][0]["strDrink"]):
 
         [drink_model, instruction_models, drink_ingr_models] = Drink.parse_drink_data(drink_data["drinks"][0])
     
