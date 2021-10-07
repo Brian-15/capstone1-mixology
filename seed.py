@@ -1,9 +1,9 @@
 import requests
-from profanity import profanity
+from better_profanity import profanity
 from app import db, app
 from models import Ingredient, Language, Drink, Category, Glass
 
-
+profanity.load_censor_words(["sex", "bitch", "asshole", "smut"])
 db.drop_all()
 db.create_all()
 
@@ -47,7 +47,7 @@ for glass in glasses:
 for id in drink_ids:
     drink_data = requests.get(f"https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i={id}").json()
 
-    if profanity.contains_profanity(drink_data["drinks"][0]["strDrink"]):
+    if not profanity.contains_profanity(drink_data["drinks"][0]["strDrink"].lower()):
 
         [drink_model, instruction_models, drink_ingr_models] = Drink.parse_drink_data(drink_data["drinks"][0])
     
