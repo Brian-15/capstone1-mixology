@@ -46,10 +46,13 @@ async function handleForm(evt) {
                     'href': `/drinks/${drink['id']}`,
                     'class': 'display-5 d-inline text-decoration-none'
                 }).text(drink['name']),
-                $('<span>').attr({
-                    'id': drink["category_id"],
-                    'class': 'badge-pill badge-info',
-                }).text(drink["category"])
+                $('<h1>').attr('class', 'd-inline text-right')
+                    .append(
+                        $('<span>').attr({
+                            'id': drink["category_id"],
+                            'class': 'tag-pill rounded-pill bg-primary text-light px-3',
+                        }).text(drink["category"])
+                    )
             ])
         );
     }
