@@ -1,7 +1,8 @@
-import os
+import os, pdb
 from flask import Flask, request, redirect, jsonify, flash, session, g
 from flask.templating import render_template
 from flask_debugtoolbar import DebugToolbarExtension
+from werkzeug.datastructures import MultiDict
 from werkzeug.exceptions import HTTPException
 from models import Bookmark, Drink, DrinkIngredient, db, connect_db, User, Category, Ingredient
 from forms import LoginForm, RegisterForm, SearchForm
@@ -179,39 +180,41 @@ def list_drinks():
     form.ingredient.choices.extend(ingredients)
     form.category.choices.extend(categories)
 
-    if request.method == "POST":
+    if form.validate_on_submit():
 
-        form_data = {field["name"]: field["value"] for field in request.json}
+        session["form_data"] = request.form
 
-        alcoholic = form_data.get("alcoholic", False)
-        name = form_data["name"] if form_data["name"] != '' else False
-        category_id = form_data["category"] if int(form_data["category"]) != 0 else False
-        ingredient_id = form_data["ingredient"] if int(form_data["ingredient"]) != 0 else False
+        name = form.name.data
+        category_id = form.category.data
+        ingredient_id = form.ingredient.data
 
-        drinks = Drink.query
+        g.drinks = Drink.query
 
-        if alcoholic:
-            drinks = drinks.filter(Drink.alcoholic == True)
-        else:
-            drinks = drinks.filter(Drink.alcoholic == False)
+        # if alcoholic:
+        #     g.drinks = g.drinks.filter(Drink.alcoholic == True)
+        # else:
+        #     g.drinks = g.drinks.filter(Drink.alcoholic == False)
         
-        if name:
-            drinks = drinks.filter(Drink.name.ilike(f"%{name}%"))
+        if name != '':
+            g.drinks = g.drinks.filter(Drink.name.ilike(f"%{name}%"))
         
-        if category_id:
-            drinks = drinks.filter(Drink.category_id == category_id)
+        if category_id != '0':
+            g.drinks = g.drinks.filter(Drink.category_id == category_id)
         
-        if ingredient_id:
+        if ingredient_id != '0':
             drink_ids = [pair.drink_id for pair in DrinkIngredient.query.filter_by(ingredient_id=ingredient_id).all()]
-            drinks = drinks.filter(Drink.id.in_(drink_ids))
+            g.drinks = g.drinks.filter(Drink.id.in_(drink_ids))
 
-        drinks = drinks.all()
-
-        return jsonify([drink.serialize() for drink in drinks])
         
-    drinks = Drink.query.paginate(page, 10)
+    if form.is_empty():
+        g.drinks = Drink.query
+    else:
+        form = SearchForm(MultiDict(session["form_data"]))
+        form.ingredient.choices.extend(ingredients)
+        form.category.choices.extend(categories)
+        
 
-    return render_template("drinks.html", title="Drinks", drinks=drinks, form=form)
+    return render_template("drinks.html", title="Drinks", drinks=g.drinks.paginate(page, 10), form=form)
 
 @app.route("/drinks/<int:id>", methods=["GET"])
 def get_drink(id):

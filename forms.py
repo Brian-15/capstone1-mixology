@@ -64,8 +64,16 @@ class SearchForm(FlaskForm):
         validators=[InputRequired()]
     )
 
-    alcoholic = BooleanField(
-        "Contains Alcohol?",
-        default=True,
-        validators=[Optional()]
-    )
+    def is_empty(self):
+        """Returns True if fields are empty"""
+
+        if self.name.data is not None:
+            return False
+        
+        if self.category.data is not None:
+            return False
+        
+        if self.ingredient.data is not None:
+            return False
+        
+        return True

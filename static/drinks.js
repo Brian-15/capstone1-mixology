@@ -9,7 +9,7 @@ $ingredientField = $('#ingredient')
 $clearBtn = $('#clear-btn');
 
 /// Clears SearchForm fields upon button click
-$clearBtn.click(evt => {
+$clearBtn.click(() => {
     $nameField.val('');
     $categoryField.val('0');
     $ingredientField.val('0');
@@ -22,7 +22,7 @@ async function handleForm(evt) {
 
     formData = $searchForm.serializeArray();
 
-    const resp = await axios.post('/drinks', formData);
+    const resp = await axios.post(`/drinks?page=1`, formData);
 
     drinkData = resp.data;
 
