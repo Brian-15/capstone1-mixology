@@ -169,6 +169,8 @@ def list_drinks():
     POST: Return JSON data with list of drinks that underwent filters from SearchForm.
     """
 
+    page = int(request.args.get("page"))
+
     form = SearchForm()
 
     ingredients = [(ingr.id, ingr.name.title()) for ingr in Ingredient.query.order_by(Ingredient.name).all()]
@@ -207,7 +209,7 @@ def list_drinks():
 
         return jsonify([drink.serialize() for drink in drinks])
         
-    drinks = Drink.query.all()
+    drinks = Drink.query.paginate(page, 10)
 
     return render_template("drinks.html", title="Drinks", drinks=drinks, form=form)
 

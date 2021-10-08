@@ -26,8 +26,6 @@ async function handleForm(evt) {
 
     drinkData = resp.data;
 
-    console.log("form submitted");
-
     $drinksList.html('');
 
     for (let drink of drinkData) {

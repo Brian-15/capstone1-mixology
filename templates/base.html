@@ -6,15 +6,15 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
 </head>
 <body>
-    <div class="container-fluid">
+    <div class="container-fluid fs-1">
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <a href="/" class="navbar-brand">MyMixology</a>
+            <a href="/" class="navbar-brand fs-3">MyMixology</a>
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
                     <a href="/home" class="nav-link">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a href="/drinks" id="" class="nav-link">Drinks</a>
+                    <a href="{{ url_for('list_drinks', page=1) }}" id="" class="nav-link">Drinks</a>
                 </li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
@@ -37,7 +37,7 @@
             </ul>
         </nav>
     </div>
-    <div class="container">
+    <div class="container fs-2">
         {% for category, msg in get_flashed_messages(with_categories=True) %}
         <p class="alert alert-{{ category }}">{{ msg }}</p>
         {% endfor %}
