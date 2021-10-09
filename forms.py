@@ -67,13 +67,13 @@ class SearchForm(FlaskForm):
     def is_empty(self):
         """Returns True if fields are empty"""
 
-        if self.name.data is not None:
+        if self.name.data is not None and self.name.data != '':
             return False
         
-        if self.category.data is not None:
+        if self.category.data is not None and self.category.data != '0':
             return False
         
-        if self.ingredient.data is not None:
+        if self.ingredient.data is not None and self.ingredient.data != '0':
             return False
         
         return True

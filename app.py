@@ -1,8 +1,8 @@
 import os, pdb
-from flask import Flask, request, redirect, jsonify, flash, session, g
+from flask import Flask, json, request, redirect, jsonify, flash, session, g
 from flask.templating import render_template
 from flask_debugtoolbar import DebugToolbarExtension
-from werkzeug.datastructures import MultiDict
+from werkzeug.datastructures import ImmutableDict, MultiDict
 from werkzeug.exceptions import HTTPException
 from models import Bookmark, Drink, DrinkIngredient, db, connect_db, User, Category, Ingredient
 from forms import LoginForm, RegisterForm, SearchForm
@@ -47,6 +47,9 @@ def root():
 @app.route("/home")
 def home():
     """Render home page"""
+
+    if "form_data" in session:
+        del session["form_data"]
 
     return render_template("home.html",
                            title="Home")
@@ -123,44 +126,80 @@ def register():
             btn_name="Create"
         )
 
-@app.route("/users/<int:id>", methods=["GET"])
-def get_user(id):
+@app.route("/user", methods=["GET"])
+def get_user():
     """Renders logged in user's profile"""
 
     if USER_KEY not in session:
         flash("You must be logged in to view this", "danger")
         return redirect("/login")
     
-    if session[USER_KEY] != id:
-        flash("You do not have access to this user's profile.", "danger")
-        return redirect("/home")
+    user = User.query.get_or_404(session[USER_KEY])
 
+    return jsonify(user.serialize())
 
-    return render_template("user.html", user=g.user, title="Profile")
+@app.route("/user", methods=["POST"])
+def create_user():
+    """Create new user"""
 
-@app.route("/users/<int:id>", methods=["DELETE"])
-def delete_user(id):
+    data = request.json()
+
+    user = User.register(data["username"], data["pwd"], data["lang_pref_id"])
+
+    return jsonify(user.serialize())
+
+@app.route("/user", methods=["PUT", "PATCH"])
+def update_user():
+
+    if USER_KEY not in session:
+        return jsonify({"STATUS": "FAIL"})
+    
+    user = User.query.filter_by(id=session[USER_KEY]).update(request.json())
+    db.session.add(user)
+    db.session.commit()
+
+    return jsonify(user.serialize())
+
+@app.route("/user", methods=["DELETE"])
+def delete_user():
     """Delete user account"""
 
     if USER_KEY not in session:
         flash("You must be logged in to do this.", "danger")
-        return redirect("/login")
+        return jsonify({"STATUS": "FAIL"})
     
-    if session[USER_KEY] != id:
-        flash("You do not have permission to do this.", "danger")
-        return redirect("/")
-
-    User.query.filter_by(id=id).delete()
+    User.query.filter_by(id=session[USER_KEY]).delete()
     db.session.commit()
 
     del session[USER_KEY]
     flash("Account successfully deleted.", "success")
 
-    return redirect("/logout")
+    return jsonify({"STATUS": "OK"})
 
 # ------------------------------------------------------------- #
 # ------------------ Drink Resource Routes -------------------- #
 # ------------------------------------------------------------- #
+
+def filter_drinks_by(name, category_id, ingredient_id):
+
+    drinks = Drink.query
+
+    if name != '':
+        drinks = drinks.filter(Drink.name.ilike(f"%{name}%"))
+        
+    if category_id != '0':
+        drinks = drinks.filter(Drink.category_id == category_id)
+    
+    if ingredient_id != '0':
+        drink_ids = [pair.drink_id for pair in DrinkIngredient.query.filter_by(ingredient_id=ingredient_id).all()]
+        drinks = drinks.filter(Drink.id.in_(drink_ids))
+    
+    return drinks
+
+@app.route("/clear-search", methods=["POST"])
+def clear_search():
+    del session["form_data"]
+    return jsonify({"STATUS": "OK"})
 
 @app.route("/drinks", methods=["GET", "POST"])
 def list_drinks():
@@ -172,8 +211,14 @@ def list_drinks():
 
     page = int(request.args.get("page"))
 
-    form = SearchForm()
-
+    if session.get("form_data", False):
+        form = SearchForm(MultiDict(session["form_data"]))
+        g.drinks = filter_drinks_by(form.name.data, form.category.data, form.ingredient.data)
+    else:
+        pdb.set_trace()
+        form = SearchForm()
+        g.drinks = Drink.query
+        
     ingredients = [(ingr.id, ingr.name.title()) for ingr in Ingredient.query.order_by(Ingredient.name).all()]
     categories = [(cat.id, cat.name.title()) for cat in Category.query.order_by(Category.name).all()]
 
@@ -184,35 +229,11 @@ def list_drinks():
 
         session["form_data"] = request.form
 
-        name = form.name.data
-        category_id = form.category.data
-        ingredient_id = form.ingredient.data
+        g.drinks = filter_drinks_by(form.name.data, form.category.data, form.ingredient.data)
 
-        g.drinks = Drink.query
-
-        # if alcoholic:
-        #     g.drinks = g.drinks.filter(Drink.alcoholic == True)
-        # else:
-        #     g.drinks = g.drinks.filter(Drink.alcoholic == False)
-        
-        if name != '':
-            g.drinks = g.drinks.filter(Drink.name.ilike(f"%{name}%"))
-        
-        if category_id != '0':
-            g.drinks = g.drinks.filter(Drink.category_id == category_id)
-        
-        if ingredient_id != '0':
-            drink_ids = [pair.drink_id for pair in DrinkIngredient.query.filter_by(ingredient_id=ingredient_id).all()]
-            g.drinks = g.drinks.filter(Drink.id.in_(drink_ids))
-
-        
-    if form.is_empty():
-        g.drinks = Drink.query
-    else:
-        form = SearchForm(MultiDict(session["form_data"]))
-        form.ingredient.choices.extend(ingredients)
-        form.category.choices.extend(categories)
-        
+    # if form.is_empty():
+    #     g.drinks = Drink.query
+    #     del session["form_data"]
 
     return render_template("drinks.html", title="Drinks", drinks=g.drinks.paginate(page, 10), form=form)
 
