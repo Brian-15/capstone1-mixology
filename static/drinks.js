@@ -2,34 +2,65 @@
 
 let page = 1;
 
+
 $drinksList = $('#drinks-list');
 $searchForm = $('form');
-$searchForm.on('submit', handleForm);
 $nameField = $('#name');
 $categoryField = $('#category');
 $ingredientField = $('#ingredient')
 $clearBtn = $('#clear-btn');
+$prevPageBtns = $('.previous');
+$nextPageBtns = $('.next');
+
+populateDrinks(page);
+
+$prevPageBtns.click(() => {
+    page = page - 1;
+    populateDrinks(page, $searchForm.serializeArray());
+});
+
+$nextPageBtns.click(() => {
+    page = page + 1;
+    populateDrinks(page, $searchForm.serializeArray());
+});
+
+$searchForm.on('submit', handleSearchForm);
 
 /// Clears SearchForm fields upon button click
 $clearBtn.click(() => {
     $nameField.val('');
     $categoryField.val('0');
     $ingredientField.val('0');
-
-    const resp = await axios.post('/clear-search')
-    // console.log(resp.data['STATUS'])
 });
 
-/// Event Handler function for handling AJAX requests via Axios to the server, fetches drink data, and replaces drink list on DOM
-async function handleSearchForm(evt) {
+async function populateDrinks(page, formData) {
 
-    evt.preventDefault();
+    const data = {"page": page};
 
-    formData = $searchForm.serializeArray();
+    if (formData) {
+        $.each(formData, (index, field) => {
+            data[field.name] = field.value;
+        });
+        console.log(data);
+    }
 
-    const resp = await axios.post(`/drinks?page=1`, formData);
+    const resp = await axios.post(`/drinks`, data);
 
-    drinkData = resp.data;
+    if (resp.data["next"]) {
+        $nextPageBtns.show();
+    }
+    else {
+        $nextPageBtns.hide();
+    }
+
+    if (resp.data["prev"]) {
+        $prevPageBtns.show();
+    }
+    else {
+        $prevPageBtns.hide();
+    }
+
+    drinkData = resp.data["drinks"];
 
     $drinksList.html('');
 
@@ -62,4 +93,14 @@ async function handleSearchForm(evt) {
             ])
         );
     }
+}
+
+/// Event Handler function for handling AJAX requests via Axios to the server, fetches drink data, and replaces drink list on DOM
+function handleSearchForm(evt) {
+
+    evt.preventDefault();
+
+    page = 1;
+
+    populateDrinks(1, $searchForm.serializeArray());
 }

@@ -1,8 +1,7 @@
-import os, pdb
-from flask import Flask, json, request, redirect, jsonify, flash, session, g
+import os
+from flask import Flask, request, redirect, jsonify, flash, session, g
 from flask.templating import render_template
 from flask_debugtoolbar import DebugToolbarExtension
-from werkzeug.datastructures import ImmutableDict, MultiDict
 from werkzeug.exceptions import HTTPException
 from models import Bookmark, Drink, DrinkIngredient, db, connect_db, User, Category, Ingredient
 from forms import LoginForm, RegisterForm, SearchForm
@@ -40,16 +39,7 @@ def add_user_to_g():
 
 @app.route("/")
 def root():
-    """Root route. Redirect to /home"""
-
-    return redirect("/home")
-
-@app.route("/home")
-def home():
     """Render home page"""
-
-    if "form_data" in session:
-        del session["form_data"]
 
     return render_template("home.html",
                            title="Home")
@@ -60,7 +50,7 @@ def login():
 
     if USER_KEY in session:
         flash("You must be logged out to view this.", "danger")
-        return redirect("/home")
+        return redirect("/")
 
     form = LoginForm()
 
@@ -73,7 +63,7 @@ def login():
         if user:
             flash("Successfully logged in.", "success")
             session[USER_KEY] = user.id
-            return redirect("/home")
+            return redirect("/")
         else:
             flash("Invalid login credentials.", "danger")
             
@@ -92,7 +82,7 @@ def logout():
     if USER_KEY in session:
         del session[USER_KEY]
         flash("You are now logged out.", "success")
-        return redirect("/home")
+        return redirect("/")
     else:
         flash("You must be logged in to do this.", "danger")
         return redirect("/login")
@@ -103,7 +93,7 @@ def register():
 
     if USER_KEY in session:
         flash("You must log out to register.", "danger")
-        return redirect("/home")
+        return redirect("/")
 
     form = RegisterForm()
 
@@ -126,15 +116,26 @@ def register():
             btn_name="Create"
         )
 
-@app.route("/user", methods=["GET"])
-def get_user():
+@app.route("/profile", methods=["GET"])
+def profile():
     """Renders logged in user's profile"""
 
     if USER_KEY not in session:
         flash("You must be logged in to view this", "danger")
         return redirect("/login")
     
-    user = User.query.get_or_404(session[USER_KEY])
+    user = User.query.get(int(session[USER_KEY]))
+
+    return render_template("user.html",
+                           title="Profile",
+                           user=user)
+
+
+@app.route("/user/<int:id>", methods=["GET"])
+def get_user(id):
+    """Return data for user"""
+
+    user = User.query.get_or_404(id)
 
     return jsonify(user.serialize())
 
@@ -183,13 +184,13 @@ def filter_drinks_by(name, category_id, ingredient_id):
 
     drinks = Drink.query
 
-    if name != '':
+    if name != "":
         drinks = drinks.filter(Drink.name.ilike(f"%{name}%"))
         
-    if category_id != '0':
+    if category_id != "0":
         drinks = drinks.filter(Drink.category_id == category_id)
     
-    if ingredient_id != '0':
+    if ingredient_id != "0":
         drink_ids = [pair.drink_id for pair in DrinkIngredient.query.filter_by(ingredient_id=ingredient_id).all()]
         drinks = drinks.filter(Drink.id.in_(drink_ids))
     
@@ -200,6 +201,12 @@ def search():
 
     form = SearchForm()
 
+    ingredients = [(ingr.id, ingr.name.title()) for ingr in Ingredient.query.all()]
+    categories = [(cat.id, cat.name.title()) for cat in Category.query.all()]
+
+    form.ingredient.choices.extend(ingredients)
+    form.category.choices.extend(categories)
+
     return render_template("drinks.html",
                            title="Drinks",
                            form=form)
@@ -209,19 +216,21 @@ def clear_search():
     del session["form_data"]
     return jsonify({"STATUS": "OK"})
 
-@app.route("/drinks", methods=["GET"])
+@app.route("/drinks", methods=["GET", "POST"])
 def get_drinks():
 
-    size = request.args.get("size", 10)
-    page = request.args.get("page", 1)
+    page = request.json.get("page", 1)
+    name = request.json.get("name", "")
+    ingredient_id = request.json.get("ingredient", "0")
+    category_id = request.json.get("category", "0")
 
-    name = request.args.get("name", None)
-    ingredient_id = request.args.get("ingredient", None)
-    category_id = request.args.get("category", None)
+    drinks = filter_drinks_by(name, category_id, ingredient_id).paginate(page, 10)
 
-    drinks = filter_drinks_by(name, category_id, ingredient_id)
-
-    return jsonify([drink.serialize() for drink in drinks.paginate(page, size).items])
+    return jsonify({
+        "drinks": [drink.serialize() for drink in drinks.items],
+        "next": drinks.has_next,
+        "prev": drinks.has_prev
+    })
 
 @app.route("/drinks/<int:id>", methods=["GET"])
 def get_drink(id):

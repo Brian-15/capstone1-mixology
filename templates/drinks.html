@@ -12,16 +12,12 @@
     <span id="clear-btn" class="btn btn-outline-primary">Clear Fields</span>
 </form>
 <ul class="pagination justify-content-center">
-    {% if drinks.has_prev %}
-    <li class="page-item">
-        <a href="{{ url_for('list_drinks', page=drinks.prev_num) }}" class="page-link">Previous</a>
+    <li class="previous page-item">
+        <a href="#" class="page-link">Previous</a>
     </li>
-    {% endif %}
-    {% if drinks.has_next %}
-    <li class="page-item">
-        <a href="{{ url_for('list_drinks', page=drinks.next_num) }}" class="page-link">Next</a>
+    <li class="next page-item">
+        <a href="#" class="page-link">Next</a>
     </li>
-    {% endif %}
 </ul>
 <table class="table">
     <thead>
@@ -29,28 +25,15 @@
         <th scope="col">Name</th>
         <th scope="col">Category</th>
     </thead>
-    <tbody id="drinks-list">
-        {% for drink in drinks.items %}
-        <tr>
-            <td><img class="mx-auto d-inline rounded img-thumbnail" src="{{ drink.image_url }}" alt="" width="200px"></td>
-            <td class="align-middle"><a class="display-5 d-inline text-decoration-none text-wrap" href="/drinks/{{ drink.id }}">{{ drink.name.title() }}</a></td>
-            <td class="align-middle"><h2 class="d-inline text-right"><span id="{{ drink.category_id }}" class="tag-pill rounded-pill bg-primary text-light mx-auto px-3">{{ drink.category.name.title() }}</span></h2></td>    
-        </tr>
-        {% endfor %}
-        
-    </tbody>
+    <tbody id="drinks-list"></tbody>
 </table>
 <ul class="pagination justify-content-center">
-    {% if drinks.has_prev %}
-    <li class="page-item">
-        <a href="{{ url_for('list_drinks', page=drinks.prev_num) }}" class="page-link">Previous</a>
+    <li class="previous page-item">
+        <a href="#" class="page-link">Previous</a>
     </li>
-    {% endif %}
-    {% if drinks.has_next %}
-    <li class="page-item">
-        <a href="{{ url_for('list_drinks', page=drinks.next_num) }}" class="page-link">Next</a>
+    <li class="next page-item">
+        <a href="#" class="page-link">Next</a>
     </li>
-    {% endif %}
 </ul>
 
 {% endblock %}
