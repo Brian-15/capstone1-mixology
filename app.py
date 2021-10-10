@@ -143,7 +143,6 @@ def create_user():
     """Create new user"""
 
     data = request.json()
-
     user = User.register(data["username"], data["pwd"], data["lang_pref_id"])
 
     return jsonify(user.serialize())
@@ -196,61 +195,48 @@ def filter_drinks_by(name, category_id, ingredient_id):
     
     return drinks
 
+@app.route("/search", methods=["GET", "POST"])
+def search():
+
+    form = SearchForm()
+
+    return render_template("drinks.html",
+                           title="Drinks",
+                           form=form)
+
 @app.route("/clear-search", methods=["POST"])
 def clear_search():
     del session["form_data"]
     return jsonify({"STATUS": "OK"})
 
-@app.route("/drinks", methods=["GET", "POST"])
-def list_drinks():
-    """Resource route for listing out drinks
-    
-    GET: Render drinks.html template, and display all drinks.
-    POST: Return JSON data with list of drinks that underwent filters from SearchForm.
-    """
+@app.route("/drinks", methods=["GET"])
+def get_drinks():
 
-    page = int(request.args.get("page"))
+    size = request.args.get("size", 10)
+    page = request.args.get("page", 1)
 
-    if session.get("form_data", False):
-        form = SearchForm(MultiDict(session["form_data"]))
-        g.drinks = filter_drinks_by(form.name.data, form.category.data, form.ingredient.data)
-    else:
-        pdb.set_trace()
-        form = SearchForm()
-        g.drinks = Drink.query
-        
-    ingredients = [(ingr.id, ingr.name.title()) for ingr in Ingredient.query.order_by(Ingredient.name).all()]
-    categories = [(cat.id, cat.name.title()) for cat in Category.query.order_by(Category.name).all()]
+    name = request.args.get("name", None)
+    ingredient_id = request.args.get("ingredient", None)
+    category_id = request.args.get("category", None)
 
-    form.ingredient.choices.extend(ingredients)
-    form.category.choices.extend(categories)
+    drinks = filter_drinks_by(name, category_id, ingredient_id)
 
-    if form.validate_on_submit():
-
-        session["form_data"] = request.form
-
-        g.drinks = filter_drinks_by(form.name.data, form.category.data, form.ingredient.data)
-
-    # if form.is_empty():
-    #     g.drinks = Drink.query
-    #     del session["form_data"]
-
-    return render_template("drinks.html", title="Drinks", drinks=g.drinks.paginate(page, 10), form=form)
+    return jsonify([drink.serialize() for drink in drinks.paginate(page, size).items])
 
 @app.route("/drinks/<int:id>", methods=["GET"])
 def get_drink(id):
-    """Get drink of id, and display page with resource instance information."""
-
-    user = USER_KEY in session
+    """Get drink of id."""
 
     drink = Drink.query.get_or_404(id)
 
-    return render_template("drink.html",
-                           title=drink.name.title(),
-                           drink=drink,
-                           user=user)
+    return jsonify(drink.serialize())
 
-@app.route("/drinks/<int:id>/bookmark", methods = ["POST"])
+@app.route("/bookmark", methods=["GET"])
+def get_bookmark():
+
+    data = request.json()
+
+@app.route("/bookmark", methods = ["POST"])
 def bookmark_drink(id):
     """Bookmarks drink of id for logged in user."""
 
@@ -260,6 +246,7 @@ def bookmark_drink(id):
     bookmark = Bookmark(drink_id=id, user_id=g.user.id)
     db.session.add(bookmark)
     db.session.commit()
+
     return jsonify({
         "STATUS": "OK",
         "CLASS": "bi bi-bookmark-fill fs-2"

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<form action="/drinks?page=1" method="POST">
+<form action="#">
     {{ form.hidden_tag() }}
     {% for field in form
         if field.widget.input_type != "hidden" %}
