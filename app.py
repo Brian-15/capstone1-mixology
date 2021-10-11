@@ -1,7 +1,8 @@
-import os
+import os, requests
 from flask import Flask, request, redirect, jsonify, flash, session, g
 from flask.templating import render_template
 from flask_debugtoolbar import DebugToolbarExtension
+from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import HTTPException
 from models import Bookmark, Drink, DrinkIngredient, db, connect_db, User, Category, Ingredient
 from forms import LoginForm, RegisterForm, SearchForm
@@ -37,12 +38,20 @@ def add_user_to_g():
     else:
         g.user = None
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def root():
-    """Render home page"""
 
-    return render_template("home.html",
-                           title="Home")
+    form = SearchForm()
+
+    ingredients = [(ingr.id, ingr.name.title()) for ingr in Ingredient.query.all()]
+    categories = [(cat.id, cat.name.title()) for cat in Category.query.all()]
+
+    form.ingredient.choices.extend(ingredients)
+    form.category.choices.extend(categories)
+
+    return render_template("drinks.html",
+                           title="MyMixology",
+                           form=form)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -102,7 +111,16 @@ def register():
         password = form.password.data
         lang_pref = form.lang_pref.data
 
-        User.register(username, password, lang_pref)
+        if form.confirm_password.data != password:
+            flash("Passwords must match.", "danger")
+            return redirect("/register")
+        
+        try:
+            User.register(username, password, lang_pref)
+        except IntegrityError as e:
+            flash("Username already exists.", "danger")
+            return redirect("/register")
+
         flash("Successfully created account. Please log in with your credentials.", "success")
 
         return redirect("/login")
@@ -131,7 +149,7 @@ def profile():
                            user=user)
 
 
-@app.route("/user/<int:id>", methods=["GET"])
+@app.route("/users/<int:id>", methods=["GET"])
 def get_user(id):
     """Return data for user"""
 
@@ -196,26 +214,6 @@ def filter_drinks_by(name, category_id, ingredient_id):
     
     return drinks
 
-@app.route("/search", methods=["GET", "POST"])
-def search():
-
-    form = SearchForm()
-
-    ingredients = [(ingr.id, ingr.name.title()) for ingr in Ingredient.query.all()]
-    categories = [(cat.id, cat.name.title()) for cat in Category.query.all()]
-
-    form.ingredient.choices.extend(ingredients)
-    form.category.choices.extend(categories)
-
-    return render_template("drinks.html",
-                           title="Drinks",
-                           form=form)
-
-@app.route("/clear-search", methods=["POST"])
-def clear_search():
-    del session["form_data"]
-    return jsonify({"STATUS": "OK"})
-
 @app.route("/drinks", methods=["GET", "POST"])
 def get_drinks():
 
@@ -238,44 +236,39 @@ def get_drink(id):
 
     drink = Drink.query.get_or_404(id)
 
-    return jsonify(drink.serialize())
+    return render_template("drink.html",
+                           title=drink.name.title(),
+                           drink=drink)
 
-@app.route("/bookmark", methods=["GET"])
-def get_bookmark():
-
-    data = request.json()
-
-@app.route("/bookmark", methods = ["POST"])
-def bookmark_drink(id):
+@app.route("/bookmark", methods = ["POST", "DELETE"])
+def bookmark_drink():
     """Bookmarks drink of id for logged in user."""
 
     if USER_KEY not in session:
         return jsonify({"STATUS": "NO_USER_FOUND"})
     
-    bookmark = Bookmark(drink_id=id, user_id=g.user.id)
-    db.session.add(bookmark)
-    db.session.commit()
+    id = int(request.json["id"])
 
-    return jsonify({
-        "STATUS": "OK",
-        "CLASS": "bi bi-bookmark-fill fs-2"
-    })
+    if request.method == "POST":
 
+        bookmark = Bookmark(drink_id=id, user_id=g.user.id)
+        db.session.add(bookmark)
+        db.session.commit()
 
-@app.route("/drinks/<int:id>/bookmark", methods = ["DELETE"])
-def remove_bookmark(id):
-    """Removes bookmark of drink for logged in user."""
+        return jsonify({
+            "STATUS": "OK",
+            "CLASS": "bi bi-bookmark-fill fs-2"
+        })
 
-    if USER_KEY not in session:
-        return jsonify({"STATUS": "NO_USER_FOUND"})
+    else:
+        id = int(request.json["id"])
 
-    Bookmark.query.filter_by(drink_id=id, user_id=g.user.id).delete()
-    db.session.commit()
-    return jsonify({
-        "STATUS": "OK",
-        "CLASS": "bi bi-bookmark fs-2"
-    })
-
+        Bookmark.query.filter_by(drink_id=id, user_id=g.user.id).delete()
+        db.session.commit()
+        return jsonify({
+            "STATUS": "OK",
+            "CLASS": "bi bi-bookmark fs-2"
+        })
 
 # ------------------------------------------------------------- #
 # ----------------------- Error Route ------------------------- #

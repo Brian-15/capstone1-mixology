@@ -16,7 +16,8 @@ async function handleBookmark() {
 
     const resp = await axios({
         method: method,
-        url: `${window.location.pathname}/bookmark`
+        url: `/bookmark`,
+        data: {'id': window.location.pathname.split('/').at(-1)}
     });
 
     $bookmark.attr('class', resp["data"]["CLASS"]);

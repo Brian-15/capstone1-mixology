@@ -5,16 +5,21 @@
     {{ form.hidden_tag() }}
     {% for field in form
         if field.widget.input_type != "hidden" %}
-        
-    <div class="form-label">
-        {{ field.label }}
+    <div class="form-group">
+        <div class="form-label">
+            {{ field.label }}
+        </div>
+        <div class="form-control">
+            {{ field }}
+        </div>
     </div>
-    <div class="form-control">
-        {{ field }}
-    </div>
+    {% for err in field.errors %}
+    <small class="form-text text-muted">{{ err }}</small>
+    {% endfor %}
+    
     {% endfor %}
     <button class="btn btn-primary mt-2" type="submit">{{ btn_name }}</button>
-    <a href="/home" class="btn btn-outline-primary mt-2">Cancel</a>
+    <a href="/" class="btn btn-outline-primary mt-2">Cancel</a>
 </form>
 
 {% endblock %}
