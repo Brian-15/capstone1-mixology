@@ -20,5 +20,7 @@ async function handleBookmark() {
         data: {'id': window.location.pathname.split('/').at(-1)}
     });
 
-    $bookmark.attr('class', resp["data"]["CLASS"]);
+    if (resp["data"]["STATUS"] == "OK") {
+        $bookmark.attr('class', resp["data"]["CLASS"]);
+    }
 }

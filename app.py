@@ -148,24 +148,6 @@ def profile():
                            title="Profile",
                            user=user)
 
-
-@app.route("/users/<int:id>", methods=["GET"])
-def get_user(id):
-    """Return data for user"""
-
-    user = User.query.get_or_404(id)
-
-    return jsonify(user.serialize())
-
-@app.route("/user", methods=["POST"])
-def create_user():
-    """Create new user"""
-
-    data = request.json()
-    user = User.register(data["username"], data["pwd"], data["lang_pref_id"])
-
-    return jsonify(user.serialize())
-
 @app.route("/user", methods=["PUT", "PATCH"])
 def update_user():
 
@@ -199,6 +181,8 @@ def delete_user():
 # ------------------------------------------------------------- #
 
 def filter_drinks_by(name, category_id, ingredient_id):
+    """Helper function, returns drink query for drinks with arguments as filters.
+    Returns query for all drinks if no filters are needed."""
 
     drinks = Drink.query
 
@@ -216,6 +200,7 @@ def filter_drinks_by(name, category_id, ingredient_id):
 
 @app.route("/drinks", methods=["GET", "POST"])
 def get_drinks():
+    """Renders list of drinks, optionally with filters."""
 
     page = request.json.get("page", 1)
     name = request.json.get("name", "")
@@ -242,7 +227,7 @@ def get_drink(id):
 
 @app.route("/bookmark", methods = ["POST", "DELETE"])
 def bookmark_drink():
-    """Bookmarks drink of id for logged in user."""
+    """Create / Deletes bookmark for drink of id for logged in user."""
 
     if USER_KEY not in session:
         return jsonify({"STATUS": "NO_USER_FOUND"})
@@ -261,8 +246,6 @@ def bookmark_drink():
         })
 
     else:
-        id = int(request.json["id"])
-
         Bookmark.query.filter_by(drink_id=id, user_id=g.user.id).delete()
         db.session.commit()
         return jsonify({

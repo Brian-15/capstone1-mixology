@@ -13,12 +13,13 @@
         <td>Bookmarks</td>
         <td>
             {% if user.bookmarks != [] %}
-            <ul class="list-group">
+            <ul id="bookmarks" class="list-group">
             {% for bookmark in user.bookmarks %}
                 <li class="list-group-item">
                     <a class="text-decoration-none" href="/drinks/{{ bookmark.id }}">
                         {{ bookmark.name.title() }}
                     </a>
+                    <a id="{{ bookmark.id }}" href="#" class="btn btn-danger">Remove</a>
                 </li>
             {% endfor %}
             </ul>
