@@ -4,26 +4,24 @@
 <p class="h2 text-center">Welcome to MyMixology!</p>
 <p class="h2 text-center">The site is free to use without an account.</p>
 <p class="h2 text-center">To bookmark your favorite recipes, you may create an account.</p>
-<form action="#">
-    {{ form.hidden_tag() }}
-    {% for field in form
-        if field.widget.input_type != "hidden" %}
-    <div class="form-group">
-        <div class="form-label">
-            {{ field.label }}
+<div class="d-flex justify-content-center mt-5 mb-3 text-center">
+    <form class="" action="#">
+        {{ form.hidden_tag() }}
+        {% for field in form
+            if field.widget.input_type != "hidden" %}
+        <div class="mb-3">
+            {{ field.label(class_="form-label") }}
+            {{ field(class_="form-control") }}
         </div>
-        <div class="form-control">
-            {{ field }}
-        </div>
-    </div>
-    {% for err in field.errors %}
-    <small class="form-text text-muted">{{ err }}</small>
-    {% endfor %}
-        
-    {% endfor %}
-    <button class="btn btn-outline-success my-2 my-sm-0 d-inline" type="submit">Search</button>
-    <span id="clear-btn" class="btn btn-outline-primary">Clear Fields</span>
-</form>
+        {% for err in field.errors %}
+        <small class="form-text text-muted">{{ err }}</small>
+        {% endfor %}
+            
+        {% endfor %}
+        <button class="btn btn-outline-success my-2 my-sm-0 d-inline" type="submit">Search</button>
+        <span id="clear-btn" class="btn btn-outline-primary">Clear Fields</span>
+    </form>
+</div>
 <ul class="pagination justify-content-center">
     <li class="previous page-item">
         <a href="" class="page-link">Previous</a>
