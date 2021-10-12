@@ -13,7 +13,7 @@ app = Flask(__name__)
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql:///mixology")
 
-app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL if DATABASE_URL == "postgresql:///mixology" else DATABASE_URL.replace("://", "ql://", 1)
+app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL if DATABASE_URL in ["postgresql:///mixology-test", "postgresql:///mixology"] else DATABASE_URL.replace("://", "ql://", 1)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ECHO"] = True
 
@@ -43,8 +43,8 @@ def root():
 
     form = SearchForm()
 
-    ingredients = [(ingr.id, ingr.name.title()) for ingr in Ingredient.query.all()]
-    categories = [(cat.id, cat.name.title()) for cat in Category.query.all()]
+    ingredients = [(ingr.id, ingr.name.title()) for ingr in Ingredient.query.order_by(Ingredient.name).all()]
+    categories = [(cat.id, cat.name.title()) for cat in Category.query.order_by(Category.name).all()]
 
     form.ingredient.choices.extend(ingredients)
     form.category.choices.extend(categories)

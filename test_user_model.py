@@ -5,7 +5,6 @@ from unittest import TestCase
 from models import Bookmark, db, Language, User, Glass, Category, Ingredient, Drink
 
 os.environ["DATABASE_URL"] = "postgresql:///mixology-test"
-
 from app import app
 
 app.config["SQLALCHEMY_ECHO"] = False

@@ -5,7 +5,6 @@ from unittest import TestCase
 from models import Category, Glass, db, Drink, Ingredient, Language
 
 os.environ["DATABASE_URL"] = "postgresql:///mixology-test"
-
 from app import app
 
 app.config["SQLALCHEMY_ECHO"] = False
@@ -40,8 +39,6 @@ class DrinkModelTestCase(TestCase):
     def setUp(self):
         """Set up Drink model"""
 
-        Drink.query.delete()
-    
         [drink, instructions, drink_ingredients] = Drink.parse_drink_data(drink_data)
 
         db.session.add(drink)
@@ -53,6 +50,11 @@ class DrinkModelTestCase(TestCase):
         db.session.commit()
 
         self.drink = Drink.query.get(11007)
+    
+    def tearDown(self) -> None:
+        """Delete all drinks from table"""
+
+        Drink.query.delete()
 
     def test_parse_drink_data(self):
         """Tests that the parse_drink_data class method from Drink model works"""
